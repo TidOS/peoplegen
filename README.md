@@ -1,3 +1,4 @@
+## Usage
 Usage:  peoplegen [-s][-f][-m][-l][d][a][u][p][P][e][E][r][x][c][S][z][A][h] 
 <--customlastname file> <--cusommalename file> <--customfemalename>
 <--customcities file> <--customstreets file> <--help> <numbertoGenerate>
