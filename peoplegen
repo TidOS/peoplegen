@@ -1,0 +1,395 @@
+#!/usr/bin/python2
+# This script generates people.
+# Jordan Thomas
+# 2008
+
+import sys, getopt, random, popen2, os
+
+# prints usage of script and then exits
+def Usage():
+	print "Usage:  peoplegen [-s][-f][-m][-l][d][a][u][p][P][e][E][r][x][c][S][z][A][h] "
+	print "<--customlastname file> <--cusommalename file> <--customfemalename>"
+	print "<--customcities file> <--customstreets file> <--help> <numbertoGenerate>"
+	print "-s	--ssn		generate a social security number"
+	print "-f	--firstname	generate a first name"
+	print "-m	--middlename	generate a middle name"
+	print "-l	--lastname	generate a last name"
+	print "-d	--birthdate	generate a date of birth"
+	print "-a	--address	generate a street address"
+	print "-u	--username	generate a user name"
+	print "-p	--phone		generate a phone number"
+	print "-P	--phone2	generate a second phone number"
+	print "-e	--email		generate an email address"
+	print "-E	--email2	generate a second email address"
+	print "-r	--race		generate a race"
+	print "-x	--sex		generate a sex"
+	print "-c	--city		generate a city name"
+	print "-S	--state		generate a state"
+	print "-z	--zip		generate a zip code"
+	print "-A	--all		generate everything available"
+	print ""
+	print "--customlastname file	use a different name list"
+	print "--customfemalename file	use a different name list for females"
+	print "--custommalename file	use a different name list for males"
+	print "--customdomain file	use a custom email domain list"
+	print
+	print "-h	--help		print this help message"
+	
+	
+	print "Example:   ./peoplegen -saup --customlastname /tmp/mynames"
+	sys.exit(0)
+
+try:
+	optlist, list = getopt.getopt(sys.argv[1:], "sfmldaupPeErxcSzAh", 
+										["ssn", "firstname", "middlename", "lastname",
+										 "birthdate", "address", "username", "phone", 
+										 "phone2", "email", "email2", "race",
+										 "sex", "city", "state", "zip", "all",
+										 "customlastname=", "custommalename=", "customfemalename=",
+										 "help", "customcities=", "customstreets=", "customdomains="])
+except getopt.GetoptError:
+	Usage()
+output = ""
+doSSN = False
+doFirstName = False
+doMiddleName = False
+doLastName = False
+doBirthDate = False
+doAddress = False
+doUserName = False
+doPhone = False
+doPhone2 = False
+doEmail = False
+doEmail2 = False
+doRace = False
+doSex = False #lol
+doCity = False
+doState = False
+doZip = False
+customFirstNames = False
+customLastNames = False
+customStreets = False
+customDomains = False
+customCities = False
+sexnum = None
+
+
+
+		
+
+# returns a social security number
+def getSSN():
+	returnme = ""
+	for i in range(9):
+		returnme += str(random.randint(0,9))
+	return returnme
+	
+# returns a name from the file given
+def getName(numNames,filename):
+	f = open(filename,"r")
+	num = random.randint(1,eval(numNames))
+	i = 0
+	for line in f:
+		if i == num:
+			f.close()
+			return line[0:len(line) -1]
+		i = i + 1
+
+#returns a date in the format M/D/YYYY
+def getADate():
+	month = random.randint(1,12)
+	day = random.randint(1,28) #too lazy to worry about days in months
+	year = random.randint(1940,2000)
+	return str(month) + "/" + str(day) + "/" + str(year)
+
+#returns a user name given a full name (first, middle, and last)
+def getUserName(f,m,l):
+	name = f[0]
+	name += m[0]
+	name += l
+	return name
+	
+#returns a randomly selected race
+def getARace():
+	races = ["white", "black", "chinese", "japanese", "african", "middle eastern", "latino", "indian", "native american"]	
+	racenum = random.randint(0,7)
+	return races[racenum]
+
+#randomly generates a 10-digit phone number
+def getAPhoneNumber():
+	returnMe = ""
+	for i in range(3):
+		returnMe += str(random.randint(0,9))
+	returnMe += "-"
+	for i in range(3):
+		returnMe += str(random.randint(0,9))
+	returnMe += "-"
+	for i in range(4):
+		returnMe += str(random.randint(0,9))
+	return returnMe
+	
+#picks a random street name out of a file, generates a street number, and picks a suffix for the street
+def getAddress(numStreets,streetsfile):
+	streetnum = random.randint(1,1000)
+	streetTypes = ["Dr", "Rd", "Cove", "Circle", "Pike", "St", "Ave", "Hollow"]
+	streetTypeNum = random.randint(0,len(streetTypes))
+	f = open(streetsfile,"r")
+	randStreet = random.randint(1,eval(numStreets))
+	i = 0
+	for line in f:
+		if i == randStreet:
+			f.close()
+			if line[len(line) -1] != " ":
+				return str(streetnum) + " " + line[0:len(line) -1]+ streetTypes[streetTypeNum]
+			return str(streetnum) + " " + line[0:len(line) -1]+ " " + streetTypes[streetTypeNum]
+		i = i + 1
+	return "Fail"
+
+#picks a random US state (or territory) and returns it
+def getState():
+	states = ["Alabama", "Alaska", "American Samoa", "Arizona", "Arkansas", "California", 
+	              "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida", 
+	               "Georgia", "Guam", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", 
+	               "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", 
+	               "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", 
+	               "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", 
+	               "North Dakota", "Northern Marianas Islands", "Ohio", "Oklahoma", "Oregon", 
+	               "Pennsylvania", "Puerto Rico", "Rhode Island", "South Carolina", "South Dakota", 
+	               "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Virgin Islands", "Washington", 
+	               "West Virginia", "Wisconsin", "Wyoming"]
+	state = states[random.randint(0,len(states) - 1)]
+	return state
+
+#returns a zip code
+def getZip():
+	zipcode = ""
+	for i in range(5):
+		zipcode += str(random.randint(0,9))
+	return zipcode
+
+
+for opt in optlist:
+	if opt[0] == "-s" or opt[0] == "--ssn":
+		doSSN = True
+	elif opt[0] == "-f" or opt[0] == "--firstname":
+		doFirstName = True
+	elif opt[0] == "-m" or opt[0] == "-- middlename":
+		doMiddleName = True
+	elif opt[0] == "-l" or opt[0] == "--lastname":
+		doLastName = True
+	elif opt[0] == "-d" or opt[0] == "--birthdate":
+		doBirthDate = True
+	elif opt[0] == "-a" or opt[0] == "--address":
+		doAddress = True
+	elif opt[0] == "-u" or opt[0] == "--username":	
+		doUserName = True
+	elif opt[0] == "-e" or opt[0] == "--email":
+		doEmail = True
+	elif opt[0] == "-E" or opt[0] == "--email2":
+		doEmail2 = True
+	elif opt[0] == "-r" or opt[0] == "--race":
+		doRace = True
+	elif opt[0] == "-x" or opt[0] == "--sex":
+		doSex = True
+	elif opt[0] == "-c" or opt[0] == "--city":
+		doCity = True
+	elif opt[0] == "-S" or opt[0] == "--state":
+		doState = True
+	elif opt[0] == "-z" or opt[0] == "--zip":
+		doZip = True
+	elif opt[0] == "-h" or opt[0] == "--help":
+		Usage()
+	elif opt[0] == "-A" or opt[0] == "--all":
+		doSSN = True
+		doFirstName = True
+		doMiddleName = True
+		doLastName = True
+		doBirthDate = True
+		doAddress = True
+		doUserName = True
+		doPhone = True
+		doPhone2 = True
+		doEmail = True
+		doEmail2 = True
+		doRace = True
+		doSex = True #lol
+		doCity = True
+		doState = True
+		doZip = True
+	elif opt[0] == "--customlastname":
+		customLastNames = True
+		lastnamefile = opt[1]
+	elif opt[0] == "--custommalename":
+		customFirstNames = True
+		firsrtnamefile = opt[1]
+	elif opt[0] == "--customfemalename":
+		customFirstNames = True
+		firstnamefile = opt[1]
+	elif opt[0] == "--customcities":
+		customCities = True
+		cityfile = opt[1]
+	elif opt[0] == "--customstreets":
+		customStreets = True
+		streetfile = opt[1]
+	elif opt[0] == "--customDomains":
+		customDomains = True
+		cityfile = opt[1]
+	
+	if opt[0] == "-h" or opt[0] == "--help":
+		Usage()
+
+#get a first name
+if doFirstName:
+	if customFirstNames == False:
+		if doSex == False:	
+			firstnamefile = "./firstnames"
+			if not os.path.exists("./firstnames"):
+				os.system("curl http://users.csc.tntech.edu/~jmthomas21/people/lastnames -o /tmp/firstnames-s")
+		else:
+			sexnum = random.randint(0,1)
+			if sexnum == 1:
+				sex = "male"
+				firstnamefile = "./malenames"
+				if not os.path.exists("./malenames"):
+					os.system("curl http://users.csc.tntech.edu/~jmthomas21/people/malenames -o /tmp/malenames -s")
+			else:
+				firstnamefile = "./femalenames"
+				if not os.path.exists("./femalenames"):
+					os.system("curl http://users.csc.tntech.edu/~jmthomas21/people/femalenames -o /tmp/femalenames -s")
+				sex = "female"
+			
+	wcargs = "wc -l " + firstnamefile
+	stdout, stdin = popen2.popen2(wcargs)
+	numFirstNames= str.split(stdout.read()," ")[0]
+
+if doLastName:
+	if customLastNames == False:
+		lastnamefile = "./lastnames"
+		if not os.path.exists("./lastnames"):
+			os.system("curl http://users.csc.tntech.edu/~jmthomas21/people/lastnames -o /tmp/lastnames -s")
+	wcargs = "wc -l " + lastnamefile
+	stdout, stdin = popen2.popen2(wcargs)
+	numLastNames= str.split(stdout.read()," ")[0]
+
+if doAddress:
+	if customStreets == False:
+		streetfile = "./streetnames"
+		if not os.path.exists("./streetnames"):
+			os.system("curl http://users.csc.tntech.edu/~jmthomas21/people/streetnames -o /tmp/streetnames -s")
+#	os.path.exists
+	wcargs = "wc -l " + streetfile
+	stdout, stdin = popen2.popen2(wcargs)
+	numStreets = str.split(stdout.read()," ")[0]
+
+if doCity:
+	if customCities == False:
+		cityfile = "./cities"
+		if not os.path.exists("./cities"):
+			os.system("curl http://users.csc.tntech.edu/~jmthomas21/people/cities -o /tmp/cities -s")
+	wcargs = "wc -l " + cityfile
+	stdout, stdin = popen2.popen2(wcargs)
+	numCities= str.split(stdout.read()," ")[0]
+	
+if doEmail or doEmail2:
+	if customDomains == False:
+		domainFile = "./domains"
+		if not os.path.exists("./domains"):
+			os.system("curl http://users.csc.tntech.edu/~jmthomas21/people/domains -o /tmp/domains -s")
+	wcargs = "wc -l " + domainFile
+	stdout, stdin = popen2.popen2(wcargs)
+	numDomains = str.split(stdout.read()," ")[0]	
+		
+i = 0
+if not list:
+	num = 1
+else:
+	num = eval(list[0])
+for i in range(0,num):
+	
+	if doSSN:
+		output += getSSN() + ","
+	
+	if doFirstName:
+		fname = getName(numFirstNames,firstnamefile)
+		output += fname + ","
+	
+	if doMiddleName:
+		mname =  getName(numFirstNames,firstnamefile)
+		output += mname + ","
+	
+	if doLastName:
+		lname =  getName(numLastNames,lastnamefile)
+		output += lname + ","
+	
+	if doSex:
+		if sexnum is None:
+			sexnum = random.randint(0,1)
+		if sexnum == 1:
+			sex = "male"
+		else:
+			sex = "female"
+		output += sex + ","
+	
+	if doRace:
+		output += getARace() + ","
+	
+	if doUserName:
+		if not fname:
+			fname = getName(numFirstNames,firstnamefile)
+		if not mname:
+			mname = getName(numFirstNames,firstnamefile)
+		if not lname:
+			lname = getName(numFirstNames,firstnamefile)
+		uname = getUserName(fname,mname,lname)
+		output += uname + ","
+		
+	if doEmail:
+		if not uname:
+			if not fname:
+				fname = getName(numFirstNames,firstnamefile)
+			if not mname:
+				mname = getName(numFirstNames,firstnamefile)
+			if not lname:
+				lname = getName(numFirstNames,firstnamefile)
+			uname = getUserName(fname,mname,lname)
+		output += uname + "@" + getName(numDomains,domainFile) + ","
+
+	if doEmail2:
+		if not uname:
+			if not fname:
+				fname = getName(numFirstNames,firstnamefile)
+			if not mname:
+				mname = getName(numFirstNames,firstnamefile)
+			if not lname:
+				lname = getName(numFirstNames,firstnamefile)
+			uname = getUserName(fname,mname,lname)
+		output += uname + "@" + getName(numDomains,domainFile) + ","		
+
+	if doPhone:
+		phone1 = getAPhoneNumber()
+		output += phone1 + ","
+	if doPhone2:
+		if phone1:
+			#it's unlikely that a person will have phone numbers in two area codes
+			output += phone1[0:3] + getAPhoneNumber()[3:12] + ","
+		else:
+			output += getAPhoneNumber() + ","
+	
+
+	if doBirthDate:
+		output += getADate() + ","
+	
+	if doAddress:
+		output += getAddress(numStreets,streetfile) + ","
+	
+	if doCity:
+		output += getName(numCities,cityfile) + ","
+		
+	if doState:
+		output += getState() + ","
+	
+	if doZip:
+		output += getZip() + ","
+	
+	print output[0:len(output) -1]
+	output = ""
