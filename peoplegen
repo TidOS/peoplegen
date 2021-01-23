@@ -8,8 +8,8 @@ import sys, getopt, random, popen2, os
 # prints usage of script and then exits
 def Usage():
 	print "Usage:  peoplegen [-s][-f][-m][-l][d][a][u][p][P][e][E][r][x][c][S][z][A][h] "
-	print "<--customlastname file> <--cusommalename file> <--customfemalename>"
-	print "<--customcities file> <--customstreets file> <--help> <numbertoGenerate>"
+	print "<customlastname file> <cusommalename file> <customfemalename>"
+	print "<customcities file> <customstreets file> <help> <numbertoGenerate>"
 	print "-s	--ssn		generate a social security number"
 	print "-f	--firstname	generate a first name"
 	print "-m	--middlename	generate a middle name"
